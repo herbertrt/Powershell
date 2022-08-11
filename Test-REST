@@ -1,0 +1,41 @@
+$Urls = @("https://lashf01realtimeapi.fnbm.corp/api/RealTime", "https://lastrn01realtimeapi.fnbm.corp/api/RealTime", "https://lastest05realtimeapi.fnbm.corp/api/RealTime", "https://laspgasim01mt01rtapi.fnbm.corp/api/realtime", "https://lvpgast1gw01.fnbm.corp/api/realtime", "https://lastest02realtimeapi.fnbm.corp/api/realtime", "https://lastest01realtimeapi.fnbm.corp/api/RealTime")
+$Body = @"
+{
+    "CleanCache": "false",
+    "CreditAccountId": 2902150,
+    "CustomerID": "3170898"
+"@
+#Invoke-RestMethod -Method 'Post' -Uri $url -Body $body  -SkipCertificateCheck
+
+# -OutFile output.csv
+
+
+add-type @"
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    public class TrustAllCertsPolicy : ICertificatePolicy {
+        public bool CheckValidationResult(
+            ServicePoint srvPoint, X509Certificate certificate,
+            WebRequest request, int certificateProblem) {
+            return true;
+        }
+    }
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Ssl3, [Net.SecurityProtocolType]::Tls, [Net.SecurityProtocolType]::Tls11, [Net.SecurityProtocolType]::Tls12
+$Header = @{"api-token"="1234567890"}
+
+foreach ( $Url in $Urls){
+    $Url
+    try{
+        $Response = Invoke-WebRequest -Uri $Url -Headers $Header -Method Post -Body $Body -ContentType "Application/Json"
+        $Response.Content
+    } catch {
+        $StatusCode = $_.Exception.Response.StatusCode.value__
+        $StatusCode
+        $Status = $_.Exception.Status
+        $Status
+    }
+    
+}
